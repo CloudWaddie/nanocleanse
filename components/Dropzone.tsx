@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
