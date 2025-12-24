@@ -1,0 +1,5 @@
+{
+  "name": "NanoCleanse",
+  "description": "A beautiful, web-based tool to automatically remove watermarks from Gemini generated images using advanced alpha-map blending.",
+  "requestFramePermissions": []
+}
