@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Download, RefreshCw, AlertCircle } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -12,8 +12,38 @@ interface ComparisonViewProps {
 const ComparisonView: React.FC<ComparisonViewProps> = ({ originalSrc, processedSrc, onReset }) => {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+
+  const syncComparisonDimensions = useCallback(() => {
+    if (!imageRef.current) return;
+    const width = Math.round(imageRef.current.getBoundingClientRect().width);
+    if (width > 0) {
+      setContainerWidth((prev) => (prev === width ? prev : width));
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    syncComparisonDimensions();
+
+    const raf1 = requestAnimationFrame(syncComparisonDimensions);
+    const raf2 = requestAnimationFrame(() => requestAnimationFrame(syncComparisonDimensions));
+
+    const resizeObserver = new ResizeObserver(syncComparisonDimensions);
+    if (imageRef.current) {
+      resizeObserver.observe(imageRef.current);
+    }
+
+    window.addEventListener('resize', syncComparisonDimensions);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', syncComparisonDimensions);
+    };
+  }, [originalSrc, processedSrc, syncComparisonDimensions]);
 
   useGSAP(() => {
     gsap.from(containerRef.current, {
@@ -101,6 +131,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ originalSrc, processedS
           <img 
             src={originalSrc} 
             alt="Original" 
+            onLoad={syncComparisonDimensions}
             className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none" 
           />
           <div className="absolute top-4 right-4 bg-black/60 backdrop-blur text-white px-2 py-1 rounded text-xs">Original</div>
@@ -113,8 +144,9 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ originalSrc, processedS
             <img 
               src={processedSrc} 
               alt="Processed" 
+              onLoad={syncComparisonDimensions}
               className="absolute top-0 left-0 h-full max-w-none object-contain"
-              style={{ width: imageRef.current ? `${imageRef.current.offsetWidth}px` : '100%' }}
+              style={{ width: containerWidth > 0 ? `${containerWidth}px` : '100%' }}
              />
              <div className="absolute top-4 left-4 bg-yellow-400/90 text-slate-900 font-bold px-2 py-1 rounded text-xs shadow-lg">Clean</div>
           </div>
