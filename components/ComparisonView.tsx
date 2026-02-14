@@ -27,9 +27,6 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ originalSrc, processedS
   useLayoutEffect(() => {
     syncComparisonDimensions();
 
-    const raf1 = requestAnimationFrame(syncComparisonDimensions);
-    const raf2 = requestAnimationFrame(() => requestAnimationFrame(syncComparisonDimensions));
-
     const resizeObserver = new ResizeObserver(syncComparisonDimensions);
     if (imageRef.current) {
       resizeObserver.observe(imageRef.current);
@@ -38,8 +35,6 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ originalSrc, processedS
     window.addEventListener('resize', syncComparisonDimensions);
 
     return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
       resizeObserver.disconnect();
       window.removeEventListener('resize', syncComparisonDimensions);
     };
